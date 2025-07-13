@@ -40,12 +40,9 @@ Example for 12 positions:
 
 Different Algorithms Collection:
 
-### Brute Force Method:
+### Brute Force Method (max up to 12-13 positions):
 
 ```Python
-##==============================================================================
-## Brute Force solver (be patient)
-##
 def solve_brute_force(distance_matrix):
     n = len(distance_matrix)
     cities = list(range(1, n))
