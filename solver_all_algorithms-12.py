@@ -1,70 +1,29 @@
-# Travelling-Salesman-NDT
-Asymmetric Traveling Salesman Problem (ATSP) and solutions
-
-Test data generator:
-
-```python
-import numpy as np
-
-def generate_cost_matrix(size, low=1.0, high=2.0, filename="cost_matrix.csv"):
-    mat = np.random.uniform(low, high, (size, size)) # Generate random floats
-    np.fill_diagonal(mat, 0.0) # Set diagonal to zero
-    mat_str = np.vectorize(lambda x: f"{x:.3f}")(mat) # Format each value
-    with open(filename, "w") as f:
-        for row in mat_str:
-            f.write(";".join(row) + "\n") # Write to file with semicolon sep.
-
-# Generate for 12 and 60 positions
-generate_cost_matrix(12, filename="cost_matrix_12.csv")
-generate_cost_matrix(60, filename="cost_matrix_60.csv")
-```
-
-Example for 12 positions:
-
-![](assets/image-20250713124253681.png)
-
-## Results for 12 and 60 Positions:
-
-| Algorithm                        | 12 Positions  | 60 Positions      |
-| -------------------------------- | ------------- | ----------------- |
-| Sequential (unoptimized)         | 16.925        | *90.716*          |
-| Optimal Inspection (Brute Force) | **13.621**    | - Not feasible :( |
-| Greedy Algorithm                 | 14.107        | 65.598            |
-| Simulated Annealing              | 14.534/14.213 | 71.737/75.718     |
-| Ant Colony Optimization          | **13.621**    | 65.638/65.803     |
-| Tabu Search                      | 13.714        | **64.905**        |
-| Lin-Kernighan (2-opt)            | 13.923        | 74.299            |
-| Genetic Algorithm                | 14.098/13.929 | 69.602/67.818     |
-
-## Solutiuons
-
-Different Algorithms Collection:
-
-### Brute Force Method:
-
-```Python
 ##==============================================================================
-## Brute Force solver (be patient)
 ##
-def solve_brute_force(distance_matrix):
-    n = len(distance_matrix)
-    cities = list(range(1, n))
-    min_cost = float('inf')
-    optimal_route = []
+## Title:		Travelling Salesman solutions for 12 possitions
+## Purpose:		Found optimal insspection path, include Brute Force
+##
+## Created on:	12.07.2025 at 08:00:00 by Andrey Dmitriev.
+##
+##==============================================================================
 
-    for perm in itertools.permutations(cities):
-        route = [0] + list(perm) + [0]  # start and end at city 0
-        cost = sum(distance_matrix[route[i]][route[i+1]] for i in range(n))
-        if cost < min_cost:
-            min_cost = cost
-            optimal_route = route
+import numpy as np
+import pandas as pd
+import random
+import math
+import itertools
 
-    return optimal_route, min_cost
-```
+# Read the CSV into a DataFrame
+df = pd.read_csv("cost_matrix_12.csv", header=None, delimiter=";")
+distance_matrix = df.to_numpy(dtype=float)
 
-### Greedy Algorithm:
+# Helper function to calculate total distance
+def total_distance(route, matrix):
+    return sum(matrix[route[i]][route[i+1]] for i in range(len(route) - 1))
 
-```python
+##==============================================================================
+## Greedy Inspection optimizer
+##
 def solve_tsp_greedy(matrix):
     n = len(matrix)
     inspected = [False] * n
@@ -83,11 +42,11 @@ def solve_tsp_greedy(matrix):
     path.append(path[0])
     route = [int(x) for x in path]
     return route, total_cost
-```
 
-### Simulated Annealing solver:
 
-```python
+##==============================================================================
+## Simulated Annealing solver
+## 
 def simulated_annealing(distance_matrix, initial_temp=1000, cooling_rate=0.995, stop_temp=1e-8):
     n = len(distance_matrix)
     current = list(range(n)) + [0]
@@ -109,11 +68,11 @@ def simulated_annealing(distance_matrix, initial_temp=1000, cooling_rate=0.995, 
         temp *= cooling_rate
 
     return best, best_cost
-```
 
-### Ant Colony Optimization:
 
-```python
+##==============================================================================
+## Ant Colony Optimization
+##
 def ant_colony_optimization(matrix, n_ants=20, n_best=5, n_iterations=100, decay=0.1, alpha=1, beta=2):
     n = len(matrix)
     pheromone = np.ones((n, n))
@@ -161,11 +120,10 @@ def ant_colony_optimization(matrix, n_ants=20, n_best=5, n_iterations=100, decay
             best_route = all_routes[0]
 
     return best_route, best_distance
-```
 
-### Tabu Search:
-
-```python
+##==============================================================================
+## Tabu Search
+##
 def tabu_search(matrix, iterations=500, tabu_size=50):
     n = len(matrix)
     current = list(range(n)) + [0]
@@ -192,11 +150,10 @@ def tabu_search(matrix, iterations=500, tabu_size=50):
             tabu_list.pop(0)
 
     return best, best_cost
-```
 
-### Lin-Kernighan Heuristic (simplified 2-opt):
-
-```python
+##==============================================================================
+## Lin-Kernighan Heuristic (simplified 2-opt)
+##
 def lin_kernighan(matrix):
     def two_opt(route):
         best = route
@@ -215,11 +172,10 @@ def lin_kernighan(matrix):
 
     initial = list(range(len(matrix))) + [0]
     return two_opt(initial)
-```
 
-### Genetic Algorithm solver:
-
-```python
+##==============================================================================
+## Genetic Algorithm solver
+##
 def genetic_algorithm(distance_matrix, population_size=100, generations=500, mutation_rate=0.01):
     import random
 
@@ -263,5 +219,67 @@ def genetic_algorithm(distance_matrix, population_size=100, generations=500, mut
         population = next_gen
     best = min(population, key=lambda r: total_distance(r, distance_matrix))
     return best, total_distance(best, distance_matrix)
-```
 
+##==============================================================================
+## Brute Force solver (will take few minutes for 12 positions)
+##
+def solve_brute_force(distance_matrix):
+    n = len(distance_matrix)
+    cities = list(range(1, n))
+    min_cost = float('inf')
+    optimal_route = []
+
+    for perm in itertools.permutations(cities):
+        route = [0] + list(perm) + [0]  # start and end at city 0
+        cost = sum(distance_matrix[route[i]][route[i+1]] for i in range(n))
+        if cost < min_cost:
+            min_cost = cost
+            optimal_route = route
+
+    return optimal_route, min_cost
+
+##==============================================================================
+## Run all algorithms, solve the TSP and print results
+##
+print("\nSequential Inspection:")
+seq_route = list(range(12))  # [0, 1, 2, ..., 11]
+seq_route.append(0)          # [0, 1, 2, ..., 11, 0]
+seq_cost = total_distance(seq_route, distance_matrix)
+print("Path:", seq_route)
+print("Cost:", round(seq_cost, 3))
+
+print("\nGreedy Algorithm:")
+greedy_path, greedy_cost = solve_tsp_greedy(distance_matrix)
+print("Path:", greedy_path)
+print("Cost:", round(greedy_cost, 3))
+
+print("\nSimulated Annealing:")
+simu_path, simu_cost = simulated_annealing(distance_matrix)
+print("Path:", simu_path)
+print("Cost:", round(simu_cost, 3))
+
+print("\nAnt Colony Optimization:")
+aco_path, aco_cost = ant_colony_optimization(distance_matrix)
+print("Path:", aco_path)
+print("Cost:", round(aco_cost, 3))
+
+print("\nTabu Search:")
+tabu_path, tabu_cost = tabu_search(distance_matrix)
+print("Path:", tabu_path)
+print("Cost:", round(tabu_cost, 3))
+
+print("\nLin-Kernighan (2-Opt) Heuristic:")
+lk_path = lin_kernighan(distance_matrix)
+lk_cost = total_distance(lk_path, distance_matrix)
+print("Path:", lk_path)
+print("Cost:", round(lk_cost, 3))
+
+print("\nGenetic Algorithm:")
+gen_path, gen_cost = genetic_algorithm(distance_matrix)
+print("Path:", gen_path)
+print("Cost:", round(gen_cost, 3))
+
+print("\nBrute Force (Optimal path) Algorithm:")
+optimal_path, optimal_cost = solve_brute_force(distance_matrix)
+print("Optimal Path:", optimal_path)
+print("Optimal Cost:", round(optimal_cost, 3))
